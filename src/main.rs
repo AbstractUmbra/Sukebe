@@ -1,13 +1,18 @@
 use scraper::{Html, Selector};
 use serde::Deserialize;
 
+/// An image representation.
 #[derive(Deserialize, Debug)]
 struct Image {
+    /// 'h' is image height.
     h: i32,
+    /// 't' is image type.
     t: String,
+    /// 'w' is image width.
     w: i32,
 }
 
+/// nHentai's API returns an array of Image.
 #[derive(Deserialize, Debug)]
 struct Images {
     cover: Image,
@@ -15,6 +20,7 @@ struct Images {
     thumbnail: Image,
 }
 
+/// nHentai tags
 #[derive(Deserialize, Debug)]
 struct Tag {
     count: i32,
@@ -24,6 +30,7 @@ struct Tag {
     url: String,
 }
 
+/// Title is two of three formats, English OR Japanese AND pretty.
 #[derive(Deserialize, Debug)]
 struct Title {
     english: String,
@@ -31,6 +38,7 @@ struct Title {
     pretty: String,
 }
 
+/// The full API response per Gallery.
 #[derive(Deserialize, Debug)]
 struct Response {
     id: i32,
