@@ -1,78 +1,69 @@
-use scraper::{Html, Selector};
-use serde::Deserialize;
-
-/// An image representation.
-#[derive(Deserialize, Debug)]
-struct Image {
-    /// 'h' is image height.
-    h: i32,
-    /// 't' is image type.
-    t: String,
-    /// 'w' is image width.
-    w: i32,
-}
-
-/// nHentai's API returns an array of Image.
-#[derive(Deserialize, Debug)]
-struct Images {
-    cover: Image,
-    pages: Vec<Image>,
-    thumbnail: Image,
-}
-
-/// nHentai tags
-#[derive(Deserialize, Debug)]
-struct Tag {
-    count: i32,
-    id: i32,
-    name: String,
-    r#type: String,
-    url: String,
-}
-
-/// Title is two of three formats, English OR Japanese AND pretty.
-#[derive(Deserialize, Debug)]
-struct Title {
-    english: String,
-    japanese: String,
-    pretty: String,
-}
-
-/// The full API response per Gallery.
-#[derive(Deserialize, Debug)]
-struct Response {
-    id: i32,
-    images: Images,
-    media_id: String,
-    num_favorites: i32,
-    num_pages: i32,
-    scanlator: String,
-    tags: Vec<Tag>,
-    title: Title,
-    upload_date: i32,
-}
+use std::fs;
+use std::fs::File;
+use std::io;
+use std::{error::Error, io::Write};
+mod models;
+use models::Response;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://nhentai.net/api/gallery/177013")
-        .await?
-        .json::<Response>()
-        .await?;
-    println!("{:#?}", resp);
-    gallery().await
+async fn main() -> Result<(), Box<dyn Error>> {
+    let mut guess = String::new();
+
+    println!("Please input the forbidden numbers:");
+
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Failed to read in the 6 digies.");
+
+    let digits: u32 = guess.trim().parse().expect("Failed to read the digies.");
+    let data = get_gallery_info(digits).await?;
+
+    fs::create_dir(format!("{}", data.id))?;
+
+    gallery(data).await?;
+    // let date = &data.uploaded_date_str();
+
+    Ok(())
 }
 
-async fn gallery() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://nhentai.net/g/177013")
-        .await?
-        .text()
-        .await?;
+async fn get_gallery_info(gallery_id: u32) -> Result<Response, Box<dyn Error>> {
+    let url = format!("https://nhentai.net/api/gallery/{}", gallery_id);
+    let resp = reqwest::get(url).await?.json::<Response>().await?;
 
-    let document = Html::parse_document(&resp);
-    let body_selector = Selector::parse(r#"img[class="lazyload"]"#).unwrap();
+    return Ok(resp);
+}
 
-    for element in document.select(&body_selector) {
-        println!("{:#?}", element.value().attr("data-src").unwrap())
+fn generate_image_urls(response: &Response) -> Vec<String> {
+    let mut urls: Vec<String> = Vec::new();
+
+    for (i, img) in response.images.pages.iter().enumerate() {
+        urls.push(format!(
+            "https://i.nhentai.net/galleries/{}/{}.{}",
+            response.media_id,
+            i + 1,
+            img.image_type()
+        ))
+    }
+
+    return urls;
+}
+
+async fn gallery(gallery_response: Response) -> Result<(), Box<dyn Error>> {
+    println!("media: {:#?}", gallery_response.media_id);
+    println!("pages: {:#?}", gallery_response.num_pages);
+
+    let urls = generate_image_urls(&gallery_response);
+
+    for (i, url) in urls.iter().enumerate() {
+        let resp = reqwest::get(url).await?;
+        let data = resp.bytes().await?;
+        let mut file = File::create(format!(
+            "{}/{}.{}",
+            gallery_response.id,
+            (i + 1).to_string(),
+            url[url.len() - 3..].to_string()
+        ))?;
+        file.write_all(&data)?;
     }
 
     Ok(())
