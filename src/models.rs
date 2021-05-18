@@ -22,6 +22,7 @@ impl Image {
         match self.t.as_str() {
             "j" => "jpg",
             "p" => "png",
+            "g" => "gif",
             _ => "?"
         }
     }
