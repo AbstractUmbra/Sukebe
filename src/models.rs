@@ -3,8 +3,7 @@ use chrono::{
     prelude::NaiveDateTime,
     DateTime, Utc,
 };
-use serde::Deserialize;
-
+use serde::{Deserialize, Deserializer, de};
 
 /// An image representation.
 #[derive(Deserialize, Debug)]
@@ -23,8 +22,17 @@ impl Image {
             "j" => "jpg",
             "p" => "png",
             "g" => "gif",
-            _ => "?"
+            _ => "?",
         }
+    }
+
+    pub fn media_url(&self, media_id: &u32, page_number: u16) -> String {
+        format!(
+            "https://i.nhentai.net/galleries/{}/{}.{}",
+            media_id,
+            page_number,
+            self.image_type()
+        )
     }
 }
 
@@ -49,9 +57,17 @@ pub struct Tag {
 /// Title is two of three formats, English OR Japanese AND pretty.
 #[derive(Deserialize, Debug)]
 pub struct Title {
-    pub english: String,
-    pub japanese: String,
+    pub english: Option<String>,
+    pub japanese: Option<String>,
     pub pretty: String,
+}
+
+fn to_u32<'de, D>(value: D) -> Result<u32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(value)?;
+    s.parse().map_err(de::Error::custom)
 }
 
 /// The full API response per Gallery.
@@ -59,7 +75,8 @@ pub struct Title {
 pub struct Response {
     pub id: u32,
     pub images: Images,
-    pub media_id: String,
+    #[serde(deserialize_with = "to_u32")]
+    pub media_id: u32,
     pub num_favorites: u32,
     pub num_pages: u32,
     pub scanlator: String,

@@ -1,7 +1,8 @@
-use std::fs;
-use std::fs::File;
-use std::io;
-use std::{error::Error, io::Write};
+use std::fs::{self, File};
+use std::{
+    error::Error,
+    io::{self, Write},
+};
 mod models;
 use models::Response;
 
@@ -37,12 +38,7 @@ fn generate_image_urls(response: &Response) -> Vec<String> {
     let mut urls: Vec<String> = Vec::new();
 
     for (i, img) in response.images.pages.iter().enumerate() {
-        urls.push(format!(
-            "https://i.nhentai.net/galleries/{}/{}.{}",
-            response.media_id,
-            i + 1,
-            img.image_type()
-        ))
+        urls.push(img.media_url(&response.media_id, (i as u16) + 1))
     }
 
     return urls;
