@@ -18,13 +18,11 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn image_type(&self) -> String {
-        if self.t == String::from("j") {
-            return String::from("jpg")
-        } else if self.t == String::from("p") {
-            return String::from("png")
-        } else {
-            return String::from("?")
+    pub fn image_type(&self) -> &'static str {
+        match self.t.as_str() {
+            "j" => "jpg",
+            "p" => "png",
+            _ => "?"
         }
     }
 }
