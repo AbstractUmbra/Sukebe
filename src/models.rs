@@ -4,6 +4,7 @@ use chrono::{
     DateTime, Utc,
 };
 use serde::{de, Deserialize, Deserializer};
+use structopt::StructOpt;
 
 pub enum ImageFormat {
     Jpg,
@@ -107,4 +108,12 @@ impl Response {
         let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
         datetime.format("%d-%m-%Y %H:%M:%S")
     }
+}
+
+#[derive(StructOpt)]
+#[structopt(name = "Lewd", about = "Abandon all faith, ye who enter here.")]
+pub struct Cli {
+    /// Specify the digits to search for.
+    #[structopt(short, long)]
+    pub digits: u32,
 }

@@ -1,23 +1,13 @@
+use structopt::StructOpt;
 use std::fs::{self, File};
-use std::{
-    error::Error,
-    io::{self, Write},
-};
+use std::{error::Error, io::Write};
 mod models;
-use models::Response;
+use models::{Cli, Response};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut guess = String::new();
-
-    println!("Please input the forbidden numbers:");
-
-    io::stdin()
-        .read_line(&mut guess)
-        .expect("Failed to read in the 6 digies.");
-
-    let digits: u32 = guess.trim().parse().expect("Failed to read the digies.");
-    let data = get_gallery_info(digits).await?;
+    let args = Cli::from_args();
+    let data = get_gallery_info(args.digits).await?;
 
     fs::create_dir(format!("{}", data.id))?;
 
@@ -45,8 +35,10 @@ fn generate_image_urls(response: &Response) -> Vec<String> {
 }
 
 async fn gallery(gallery_response: Response) -> Result<(), Box<dyn Error>> {
-    println!("media: {:#?}", gallery_response.media_id);
-    println!("pages: {:#?}", gallery_response.num_pages);
+    println!(
+        "name: {:#?}\nmedia: {:#?}\npages: {:#?}\nupload date: {}",
+        gallery_response.title.pretty, gallery_response.media_id, gallery_response.num_pages, gallery_response.uploaded_date_str()
+    );
 
     let urls = generate_image_urls(&gallery_response);
 
