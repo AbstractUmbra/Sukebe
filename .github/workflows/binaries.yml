@@ -1,0 +1,59 @@
+
+name: Rust
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  CD:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          arch:
+            - { target: arm-unknown-linux-gnueabihf , use-cross: true }
+            - { target: i686-unknown-linux-gnu , use-cross: true }
+            - { target: x86_64-unknown-linux-gnu }
+      steps:
+        - uses: actions/checkout@v2
+        - name: Extract crate information
+          shell: bash
+          run: |
+            echo "PROJECT_NAME=$(sed -n 's/^name = "\(.*\)"/\1/p' Cargo.toml)" >> "$GITHUB_ENV"
+            echo "PROJECT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)" >> "$GITHUB_ENV"
+        - name: Build
+          uses: actions-rs/cargo@v1
+          with:
+            use-cross: ${{ matrix.arch.use-cross }}
+            command: build
+            args: --release --target=${{ matrix.arch.target }}
+        - name: Extract crate information
+          shell: bash
+          run: |
+            cp  target/${{ matrix.arch.target }}/release/${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}-${{ matrix.arch.target }}
+
+        - name: Upload package artifact
+          uses: actions/upload-artifact@master
+          with:
+            path: ${{ env.PROJECT_NAME }}-${{ matrix.arch.target }}
+        
+  release:
+    needs: CD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            view the CHANGELOG.md for full changes
+          files: |
+            dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
