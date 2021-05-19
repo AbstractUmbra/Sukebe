@@ -5,6 +5,22 @@ use chrono::{
 };
 use serde::{Deserialize, Deserializer, de};
 
+pub enum ImageFormat {
+    Jpg,
+    Png,
+    Gif
+}
+
+impl ImageFormat {
+    pub fn extension(&self) -> &str {
+        match self {
+            ImageFormat::Gif => "gif",
+            ImageFormat::Jpg => "jpg",
+            ImageFormat::Png => "png"
+        }
+    }
+}
+
 /// An image representation.
 #[derive(Deserialize, Debug)]
 pub struct Image {
@@ -17,12 +33,12 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn image_type(&self) -> &'static str {
+    pub fn image_type(&self) -> ImageFormat {
         match self.t.as_str() {
-            "j" => "jpg",
-            "p" => "png",
-            "g" => "gif",
-            _ => "?",
+            "j" => ImageFormat::Jpg,
+            "p" => ImageFormat::Png,
+            "g" => ImageFormat::Gif,
+            _ => unreachable!(),
         }
     }
 
@@ -31,7 +47,7 @@ impl Image {
             "https://i.nhentai.net/galleries/{}/{}.{}",
             media_id,
             page_number,
-            self.image_type()
+            self.image_type().extension()
         )
     }
 }
