@@ -3,12 +3,12 @@ use chrono::{
     prelude::NaiveDateTime,
     DateTime, Utc,
 };
-use serde::{Deserialize, Deserializer, de};
+use serde::{de, Deserialize, Deserializer};
 
 pub enum ImageFormat {
     Jpg,
     Png,
-    Gif
+    Gif,
 }
 
 impl ImageFormat {
@@ -16,7 +16,7 @@ impl ImageFormat {
         match self {
             ImageFormat::Gif => "gif",
             ImageFormat::Jpg => "jpg",
-            ImageFormat::Png => "png"
+            ImageFormat::Png => "png",
         }
     }
 }
