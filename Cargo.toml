@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-scraper = "0.12.0"
+# scraper = "0.12.0"
 reqwest = { version = "0.11.3", features = ["json", "rustls-tls"], default-features = false }
 tokio = { version = "1.6.0", features = ["full"] }
 serde = { version = "1.0.126", features = ["derive"] }
 chrono = "0.4.19"
+structopt = "0.3.21"
