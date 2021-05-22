@@ -12,17 +12,6 @@ mod models;
 async fn main() -> Result<()> {
     let args = Cli::from_args();
     let doujin = Doujin::new(args.digits).await?;
-    // let doujins = Doujin::search("nagatoro").await?;
-    // for doujin in doujins {
-    //     let directory_path = PathBuf::from(doujin.id.to_string());
-
-    //     if !directory_path.exists() {
-    //         fs::create_dir(&directory_path)
-    //             .with_context(|| format!("Could not create directory named `{}`", doujin.id))?;
-    //     }
-
-    //     doujin.gallery().await?;
-    // }
     let directory_path = PathBuf::from(doujin.id.to_string());
 
     if !directory_path.exists() {
@@ -31,6 +20,7 @@ async fn main() -> Result<()> {
     }
 
     doujin.gallery().await?;
+
     Ok(())
 }
 
