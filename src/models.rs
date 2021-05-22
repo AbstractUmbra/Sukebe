@@ -1,6 +1,6 @@
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
-    prelude::NaiveDateTime,
+    serde::ts_seconds,
     DateTime, Utc,
 };
 use serde::{de, Deserialize, Deserializer};
@@ -67,7 +67,8 @@ pub struct Tag {
     count: u32,
     id: u32,
     name: String,
-    r#type: String,
+    #[serde(rename = "type")]
+    category: String,
     url: String,
 }
 
@@ -89,7 +90,7 @@ where
 
 /// The full API response per Gallery.
 #[derive(Deserialize, Debug)]
-pub struct Response {
+pub struct Doujin {
     pub id: u32,
     pub images: Images,
     #[serde(deserialize_with = "to_u32")]
@@ -99,14 +100,13 @@ pub struct Response {
     pub scanlator: String,
     pub tags: Vec<Tag>,
     pub title: Title,
-    pub upload_date: u32,
+    #[serde(with = "ts_seconds")]
+    pub upload_date: DateTime<Utc>,
 }
 
-impl Response {
+impl Doujin {
     pub fn uploaded_date_str(&self) -> DelayedFormat<StrftimeItems> {
-        let naive = NaiveDateTime::from_timestamp(self.upload_date.into(), 0);
-        let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-        datetime.format("%d-%m-%Y %H:%M:%S")
+        self.upload_date.format("%d-%m-%Y %H:%M:%S")
     }
 }
 

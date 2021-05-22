@@ -1,8 +1,8 @@
-use structopt::StructOpt;
 use std::fs::{self, File};
 use std::{error::Error, io::Write};
+use structopt::StructOpt;
 mod models;
-use models::{Cli, Response};
+use models::{Cli, Doujin};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -17,14 +17,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn get_gallery_info(gallery_id: u32) -> Result<Response, Box<dyn Error>> {
+async fn get_gallery_info(gallery_id: u32) -> Result<Doujin, Box<dyn Error>> {
     let url = format!("https://nhentai.net/api/gallery/{}", gallery_id);
-    let resp = reqwest::get(url).await?.json::<Response>().await?;
+    let resp = reqwest::get(url).await?.json::<Doujin>().await?;
 
     return Ok(resp);
 }
 
-fn generate_image_urls(response: &Response) -> Vec<String> {
+fn generate_image_urls(response: &Doujin) -> Vec<String> {
     let mut urls: Vec<String> = Vec::new();
 
     for (i, img) in response.images.pages.iter().enumerate() {
@@ -34,10 +34,13 @@ fn generate_image_urls(response: &Response) -> Vec<String> {
     return urls;
 }
 
-async fn gallery(gallery_response: Response) -> Result<(), Box<dyn Error>> {
+async fn gallery(gallery_response: Doujin) -> Result<(), Box<dyn Error>> {
     println!(
         "name: {:#?}\nmedia: {:#?}\npages: {:#?}\nupload date: {}",
-        gallery_response.title.pretty, gallery_response.media_id, gallery_response.num_pages, gallery_response.uploaded_date_str()
+        gallery_response.title.pretty,
+        gallery_response.media_id,
+        gallery_response.num_pages,
+        gallery_response.uploaded_date_str()
     );
 
     let urls = generate_image_urls(&gallery_response);
