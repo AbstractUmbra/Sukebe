@@ -1,11 +1,14 @@
+use anyhow::{Context, Result};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     serde::ts_seconds,
     DateTime, Utc,
 };
 use serde::{de, Deserialize, Deserializer};
+use std::fmt;
 use structopt::StructOpt;
 
+#[derive(Debug)]
 pub enum ImageFormat {
     Jpg,
     Png,
@@ -22,33 +25,47 @@ impl ImageFormat {
     }
 }
 
+impl fmt::Display for ImageFormat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.extension())
+    }
+}
+
+impl<'de> Deserialize<'de> for ImageFormat {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let file_type: &str = Deserialize::deserialize(deserializer)?;
+
+        match file_type {
+            "j" => Ok(ImageFormat::Jpg),
+            "p" => Ok(ImageFormat::Png),
+            "g" => Ok(ImageFormat::Gif),
+            _ => Err(de::Error::custom("unrecognised file format")),
+        }
+    }
+}
+
 /// An image representation.
 #[derive(Deserialize, Debug)]
 pub struct Image {
-    /// 'h' is image height.
-    pub h: u16,
-    /// 't' is image type.
-    pub t: String,
-    /// 'w' is image width.
-    pub w: u16,
+    /// 'width' is the image width.
+    #[serde(rename = "w")]
+    pub width: u16,
+    /// 'height' is the image height.
+    #[serde(rename = "h")]
+    pub height: u16,
+    /// 'format' is the image format.
+    #[serde(rename = "t")]
+    pub format: ImageFormat,
 }
 
 impl Image {
-    pub fn image_type(&self) -> ImageFormat {
-        match self.t.as_str() {
-            "j" => ImageFormat::Jpg,
-            "p" => ImageFormat::Png,
-            "g" => ImageFormat::Gif,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn media_url(&self, media_id: &u32, page_number: u16) -> String {
+    pub fn media_url(&self, media_id: u32, page_number: u16) -> String {
         format!(
             "https://i.nhentai.net/galleries/{}/{}.{}",
-            media_id,
-            page_number,
-            self.image_type().extension()
+            media_id, page_number, self.format
         )
     }
 }
@@ -105,7 +122,19 @@ pub struct Doujin {
 }
 
 impl Doujin {
-    pub fn uploaded_date_str(&self) -> DelayedFormat<StrftimeItems> {
+    pub async fn new(gallery_id: u32) -> Result<Self> {
+        let url = format!("https://nhentai.net/api/gallery/{}", gallery_id);
+        let result = reqwest::get(&url)
+            .await
+            .with_context(|| format!("Could not fetch URL `{}`", &url))?
+            .json::<Self>()
+            .await
+            .context("Invalid API response")?;
+
+        Ok(result)
+    }
+
+    pub fn pretty_date(&self) -> DelayedFormat<StrftimeItems> {
         self.upload_date.format("%d-%m-%Y %H:%M:%S")
     }
 }

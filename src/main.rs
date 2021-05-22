@@ -1,61 +1,57 @@
-use std::fs::{self, File};
-use std::{error::Error, io::Write};
-use structopt::StructOpt;
-mod models;
+use anyhow::{Context, Result};
+use futures::stream::TryStreamExt;
 use models::{Cli, Doujin};
+use std::fs::{self, File};
+use std::io::Write;
+use std::path::PathBuf;
+use structopt::StructOpt;
+
+mod models;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     let args = Cli::from_args();
-    let data = get_gallery_info(args.digits).await?;
+    let doujin = Doujin::new(args.digits).await?;
+    let directory_path = PathBuf::from(doujin.id.to_string());
 
-    fs::create_dir(format!("{}", data.id))?;
+    if !directory_path.exists() {
+        fs::create_dir(&directory_path)
+            .with_context(|| format!("Could not create directory named `{}`", doujin.id))?;
+    }
 
-    gallery(data).await?;
-    // let date = &data.uploaded_date_str();
+    doujin.gallery().await?;
 
     Ok(())
 }
 
-async fn get_gallery_info(gallery_id: u32) -> Result<Doujin, Box<dyn Error>> {
-    let url = format!("https://nhentai.net/api/gallery/{}", gallery_id);
-    let resp = reqwest::get(url).await?.json::<Doujin>().await?;
+impl Doujin {
+    async fn gallery(&self) -> Result<()> {
+        println!(
+            "name: {:#?}\nmedia: {:#?}\npages: {:#?}\nupload date: {}",
+            self.title.pretty,
+            self.media_id,
+            self.num_pages,
+            self.pretty_date()
+        );
 
-    return Ok(resp);
-}
+        for (i, image) in self.images.pages.iter().enumerate() {
+            let page_number = i + 1;
+            let url = image.media_url(self.media_id, page_number as u16);
+            let resp = reqwest::get(&url)
+                .await
+                .with_context(|| format!("Could not fetch URL `{}`", &url))?;
 
-fn generate_image_urls(response: &Doujin) -> Vec<String> {
-    let mut urls: Vec<String> = Vec::new();
+            let file_path = format!("{}/{}.{}", self.id, page_number, image.format);
+            let mut file = File::create(&file_path)
+                .with_context(|| format!("Could not create file at `{}`", &file_path))?;
 
-    for (i, img) in response.images.pages.iter().enumerate() {
-        urls.push(img.media_url(&response.media_id, (i as u16) + 1))
+            let mut stream = resp.bytes_stream();
+            while let Some(chunk) = stream.try_next().await? {
+                file.write_all(&chunk)
+                    .with_context(|| format!("Could not write to `{}`", &file_path))?;
+            }
+        }
+
+        Ok(())
     }
-
-    return urls;
-}
-
-async fn gallery(gallery_response: Doujin) -> Result<(), Box<dyn Error>> {
-    println!(
-        "name: {:#?}\nmedia: {:#?}\npages: {:#?}\nupload date: {}",
-        gallery_response.title.pretty,
-        gallery_response.media_id,
-        gallery_response.num_pages,
-        gallery_response.uploaded_date_str()
-    );
-
-    let urls = generate_image_urls(&gallery_response);
-
-    for (i, url) in urls.iter().enumerate() {
-        let resp = reqwest::get(url).await?;
-        let data = resp.bytes().await?;
-        let mut file = File::create(format!(
-            "{}/{}.{}",
-            gallery_response.id,
-            (i + 1).to_string(),
-            url[url.len() - 3..].to_string()
-        ))?;
-        file.write_all(&data)?;
-    }
-
-    Ok(())
 }
