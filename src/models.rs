@@ -120,6 +120,13 @@ impl<'de> de::Visitor<'de> for ToU32Visitor {
     {
         Ok(v as u32)
     }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v as u32)
+    }
 }
 
 fn to_u32<'de, D>(deserializer: D) -> Result<u32, D::Error>
