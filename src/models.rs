@@ -174,11 +174,11 @@ impl Doujin {
     }
 
     pub async fn search(query: &str) -> Result<Vec<Self>> {
-        let url = format!("https://nhentai.net/api/galleries/search");
+        let url = "https://nhentai.net/api/galleries/search";
         let client = reqwest::Client::new();
 
         let response = client
-            .get(&url)
+            .get(url)
             .query(&[("query", query)])
             .send()
             .await
@@ -191,11 +191,11 @@ impl Doujin {
     }
 
     pub async fn from_tag(tag_id: u32) -> Result<Vec<Self>> {
-        let url = format!("https://nhentai.net/api/galleries/tagged");
+        let url = "https://nhentai.net/api/galleries/tagged";
         let client = reqwest::Client::new();
 
         let response = client
-            .get(&url)
+            .get(url)
             .query(&[("tag_id", &tag_id)])
             .send()
             .await
