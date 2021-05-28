@@ -4,9 +4,10 @@ use chrono::{
     serde::ts_seconds,
     DateTime, Utc,
 };
+use futures::stream::TryStreamExt;
 use serde::{de, Deserialize, Deserializer};
 use serde_json::Value;
-use std::fmt;
+use std::{fmt, fs::File, io::Write};
 use structopt::StructOpt;
 
 #[derive(Debug)]
@@ -223,6 +224,36 @@ impl Doujin {
         Ok(response.result)
     }
 
+    pub async fn gallery(&self) -> Result<()> {
+        println!(
+            "name: {:#?}\nmedia: {:#?}\npages: {:#?}\nupload date: {}",
+            self.title.pretty,
+            self.media_id,
+            self.num_pages,
+            self.pretty_date()
+        );
+
+        for (i, image) in self.images.pages.iter().enumerate() {
+            let page_number = i + 1;
+            let url = image.media_url(self.media_id, page_number as u16);
+            let resp = reqwest::get(&url)
+                .await
+                .with_context(|| format!("Could not fetch URL `{}`", &url))?;
+
+            let file_path = format!("{}/{}.{}", self.id, page_number, image.format);
+            let mut file = File::create(&file_path)
+                .with_context(|| format!("Could not create file at `{}`", &file_path))?;
+
+            let mut stream = resp.bytes_stream();
+            while let Some(chunk) = stream.try_next().await? {
+                file.write_all(&chunk)
+                    .with_context(|| format!("Could not write to `{}`", &file_path))?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn pretty_date(&self) -> DelayedFormat<StrftimeItems> {
         self.upload_date.format("%d-%m-%Y %H:%M:%S")
     }
@@ -231,7 +262,10 @@ impl Doujin {
 #[derive(StructOpt)]
 #[structopt(name = "Lewd", about = "Abandon all faith, ye who enter here.")]
 pub struct Cli {
+    /// Specify the term to search for.
+    #[structopt(short, long)]
+    pub search: Option<String>,
     /// Specify the digits to search for.
     #[structopt(short, long)]
-    pub digits: u32,
+    pub digits: Option<u32>,
 }
