@@ -1,5 +1,5 @@
 <div align="center">
-    <h1><a href="https://jisho.org/word/%E5%8A%A9%E5%B9%B3">Sukebei 『助平』</h1>
+    <h1><a href="https://jisho.org/word/%E5%8A%A9%E5%B9%B3">Sukebei 『助平』</a></h1>
 </div>
 
 I wanted to learn Rust so I've made this contraption.
