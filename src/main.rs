@@ -12,7 +12,10 @@ async fn main() -> Result<()> {
         download_single(args.digits.unwrap()).await?
     }
     if !args.search.is_none() {
-        download_many(args.search.unwrap()).await?
+        download_from_search(args.search.unwrap()).await?
+    }
+    if !args.alike.is_none() {
+        download_from_alike(args.alike.unwrap()).await?
     }
 
     Ok(())
@@ -32,7 +35,7 @@ async fn download_single(digits: u32) -> Result<()> {
     Ok(())
 }
 
-async fn download_many(search: String) -> Result<()> {
+async fn download_from_search(search: String) -> Result<()> {
     let doujins = Doujin::search(&search).await?;
     for doujin in doujins {
         let directory_path = PathBuf::from(doujin.id.to_string());
@@ -40,6 +43,22 @@ async fn download_many(search: String) -> Result<()> {
         if !directory_path.exists() {
             fs::create_dir(&directory_path)
                 .with_context(|| format!("Could not create directory named `{}`", doujin.id))?;
+        }
+
+        doujin.gallery().await?;
+    }
+
+    Ok(())
+}
+
+async fn download_from_alike(digits: u32) -> Result<()> {
+    let doujins = Doujin::from_alike(digits).await?;
+    for doujin in doujins {
+        let directory_path = PathBuf::from(doujin.id.to_string());
+
+        if !directory_path.exists() {
+            fs::create_dir(&directory_path)
+                .with_context(|| format!("Could not created directory named `{}`", doujin.id))?;
         }
 
         doujin.gallery().await?;

@@ -157,8 +157,8 @@ pub struct Doujin {
 #[derive(Deserialize, Debug)]
 pub struct DoujinSearch {
     pub result: Vec<Doujin>,
-    pub num_pages: Value,
-    pub per_page: Value,
+    pub num_pages: Option<Value>,
+    pub per_page: Option<Value>,
 }
 
 impl Doujin {
@@ -268,4 +268,7 @@ pub struct Cli {
     /// Specify the digits to search for.
     #[structopt(short, long)]
     pub digits: Option<u32>,
+    /// Specify the digits we are getting the "alikes" for.
+    #[structopt(short, long)]
+    pub alike: Option<u32>,
 }
