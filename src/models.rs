@@ -81,6 +81,7 @@ pub struct Images {
 }
 
 /// nHentai tags
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Tag {
     count: u32,
@@ -191,22 +192,22 @@ impl Doujin {
         Ok(response.result)
     }
 
-    pub async fn from_tag(tag_id: u32) -> Result<Vec<Self>> {
-        let url = "https://nhentai.net/api/galleries/tagged";
-        let client = reqwest::Client::new();
+    // pub async fn from_tag(tag_id: u32) -> Result<Vec<Self>> {
+    //     let url = "https://nhentai.net/api/galleries/tagged";
+    //     let client = reqwest::Client::new();
 
-        let response = client
-            .get(url)
-            .query(&[("tag_id", &tag_id)])
-            .send()
-            .await
-            .with_context(|| format!("Could not search tags with id `{}", &tag_id))?
-            .json::<DoujinSearch>()
-            .await
-            .with_context(|| format!("Could not parse response from url `{}`", &url))?;
+    //     let response = client
+    //         .get(url)
+    //         .query(&[("tag_id", &tag_id)])
+    //         .send()
+    //         .await
+    //         .with_context(|| format!("Could not search tags with id `{}", &tag_id))?
+    //         .json::<DoujinSearch>()
+    //         .await
+    //         .with_context(|| format!("Could not parse response from url `{}`", &url))?;
 
-        Ok(response.result)
-    }
+    //     Ok(response.result)
+    // }
 
     pub async fn from_alike(doujin_id: u32) -> Result<Vec<Self>> {
         let url = format!("https://nhentai.net/api/gallery/{}/related", doujin_id);
@@ -267,7 +268,7 @@ pub struct Cli {
     pub search: Option<String>,
     /// Specify the digits to search for.
     #[structopt(short, long)]
-    pub digits: Option<u32>,
+    pub digits: Option<Vec<u32>>,
     /// Specify the digits we are getting the "alikes" for.
     #[structopt(short, long)]
     pub alike: Option<u32>,

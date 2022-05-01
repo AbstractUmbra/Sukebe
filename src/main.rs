@@ -8,13 +8,16 @@ mod models;
 async fn main() -> Result<()> {
     let args = <Cli as structopt::StructOpt>::from_args();
 
-    if !args.digits.is_none() {
-        download_single(args.digits.unwrap()).await?
+    if args.digits.is_some() {
+        match args.digits {
+            Some(gallery) => download_many(gallery).await?,
+            None => println!("No digits specified."),
+        }
     }
-    if !args.search.is_none() {
+    if args.search.is_some() {
         download_from_search(args.search.unwrap()).await?
     }
-    if !args.alike.is_none() {
+    if args.alike.is_some() {
         download_from_alike(args.alike.unwrap()).await?
     }
 
@@ -31,6 +34,14 @@ async fn download_single(digits: u32) -> Result<()> {
     }
 
     doujin.gallery().await?;
+
+    Ok(())
+}
+
+async fn download_many(digits: Vec<u32>) -> Result<()> {
+    for gallery in digits {
+        download_single(gallery).await?;
+    }
 
     Ok(())
 }
