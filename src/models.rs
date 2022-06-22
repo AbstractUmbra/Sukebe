@@ -182,6 +182,10 @@ impl Doujin {
         let response = client
             .get(url)
             .query(&[("query", query)])
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
+            )
             .send()
             .await
             .with_context(|| format!("Could not perform search with query `{}", query))?
@@ -215,6 +219,10 @@ impl Doujin {
 
         let response = client
             .get(&url)
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
+            )
             .send()
             .await
             .with_context(|| format!("Could not search related doujin with id `{}", &doujin_id))?
@@ -233,13 +241,21 @@ impl Doujin {
             self.num_pages,
             self.pretty_date()
         );
+        let client = reqwest::Client::new();
 
         for (i, image) in self.images.pages.iter().enumerate() {
             let page_number = i + 1;
             let url = image.media_url(self.media_id, page_number as u16);
-            let resp = reqwest::get(&url)
-                .await
-                .with_context(|| format!("Could not fetch URL `{}`", &url))?;
+
+            let resp = client
+            .get(&url)
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
+            )
+            .send()
+            .await
+            .with_context(|| format!("Could not fetch URL `{}`", &url))?;
 
             let file_path = format!("{}/{}.{}", self.id, page_number, image.format);
             let mut file = File::create(&file_path)
