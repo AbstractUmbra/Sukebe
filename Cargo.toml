@@ -1,6 +1,6 @@
 [package]
 name = "sukebe"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["Alex Nørgaard <Umbra@AbstractUmbra.xyz>"]
 edition = "2018"
 
