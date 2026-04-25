@@ -1,0 +1,13 @@
+serde
+moka
+doujin
+doujins
+hentai
+scanlator
+tzname
+rrule
+reqwest
+sukebe
+divmod
+standardised
+datetimes
