@@ -8,7 +8,7 @@ pub struct CDNResponse {
 }
 
 /// An image representation.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Image {
     /// 'width' is the image width.
     pub width: u16,
@@ -25,7 +25,7 @@ impl Image {
 }
 
 /// nHentai tags
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Tag {
     id: u32,
     r#type: String,
@@ -36,14 +36,14 @@ pub struct Tag {
 }
 
 /// Title is two of three formats, English OR Japanese AND pretty.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Title {
     pub english: Option<String>,
     pub japanese: Option<String>,
     pub pretty: String,
 }
 
-#[derive(Deserialize, Debug, Eq, PartialEq)]
+#[derive(Deserialize, Eq, PartialEq)]
 pub struct Page {
     pub number: u32,
     pub path: String,
@@ -65,7 +65,7 @@ impl Page {
 }
 
 /// The full API response per Gallery.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Doujin {
     pub id: u32,
     pub media_id: String,

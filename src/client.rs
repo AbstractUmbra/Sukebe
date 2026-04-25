@@ -13,25 +13,33 @@ pub(crate) const USER_AGENT: &'static str = "Sukebe/v1 (https://github.com/Abstr
 pub struct SukebeClient {
     client: Arc<Client>,
     image_cdn_cache: Cache<u8, Arc<CDNResponse>>,
+    auth_key: String,
 }
 
 impl SukebeClient {
     pub fn new() -> Self {
+        let contents = std::fs::read_to_string("auth.key");
+        let auth = match contents {
+            Ok(key) => key,
+            Err(_) => "".into(),
+        };
+
         Self {
             client: Arc::new(Client::new()),
             image_cdn_cache: Cache::builder()
                 .time_to_live(std::time::Duration::from_hours(1))
                 .build(),
+            auth_key: auth,
         }
     }
 
     pub async fn get_doujin(&self, doujin_id: u32) -> Result<Doujin> {
         let url = format!("{}/galleries/{}", API_BASE, doujin_id);
-        let result = self
-            .client
-            .get(&url)
-            .header("User-Agent", USER_AGENT)
-            .header("Authorization", "")
+        let mut req = self.client.get(&url).header("User-Agent", USER_AGENT);
+        if !self.auth_key.is_empty() {
+            req = req.header("Authorization", &self.auth_key);
+        };
+        let result = req
             .send()
             .await
             .with_context(|| format!("Could not fetch URL `{}`", &url))?
