@@ -5,5 +5,5 @@ use clap::Parser;
 pub struct Args {
     /// ID of the target doujin
     #[arg(short, long)]
-    pub doujin_ids: Option<Vec<u32>>,
+    pub digits: Option<Vec<u32>>,
 }

@@ -14,8 +14,8 @@ async fn main() -> Result<()> {
 
     let client = &SukebeClient::new();
 
-    if args.doujin_ids.is_some() {
-        match args.doujin_ids {
+    if args.digits.is_some() {
+        match args.digits {
             Some(galleries) => download_many(client, galleries).await?,
             None => println!("No digits specified."),
         }
