@@ -1,22 +1,26 @@
-use anyhow::{Context, Result};
-use clap::Parser;
-use cli::Args;
-use client::SukebeClient;
 use std::{fs, path::PathBuf};
 
+use anyhow::{Context, Result};
+use clap::Parser;
+
 mod cli;
-mod client;
-mod models;
+
+use cli::Args;
+use sukebe::SukebeClient;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let client = &SukebeClient::new();
+    let mut client = SukebeClient::new();
+
+    if let Some(key) = std::fs::read_to_string("auth.key").ok() {
+        client = client.with_api_key(key.trim());
+    }
 
     if args.digits.is_some() {
         match args.digits {
-            Some(galleries) => download_many(client, galleries).await?,
+            Some(galleries) => download_many(&client, galleries).await?,
             None => println!("No digits specified."),
         }
     }

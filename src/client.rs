@@ -1,44 +1,54 @@
-use crate::models::{CDNResponse, Doujin};
-use anyhow::{Context, Result};
 use futures::stream::TryStreamExt;
+use std::{fs::File, io::Write, path::Path, sync::Arc};
+
+use anyhow::{Context, Result};
 use moka::future::Cache;
 use rand::seq::IndexedRandom;
-use reqwest::Client;
-use std::sync::Arc;
-use std::{fs::File, io::Write};
+use reqwest::{
+    Client,
+    header::{self, HeaderValue},
+};
+
+use crate::models::{CDNResponse, Doujin};
 
 pub(crate) const API_BASE: &'static str = "https://nhentai.net/api/v2";
 pub(crate) const USER_AGENT: &'static str = "Sukebe/v1 (https://github.com/AbstractUmbra/Sukebe)";
 
 pub struct SukebeClient {
-    client: Arc<Client>,
+    client: Client,
     image_cdn_cache: Cache<u8, Arc<CDNResponse>>,
-    auth_key: String,
+    api_key: Option<String>,
 }
 
 impl SukebeClient {
     pub fn new() -> Self {
-        let contents = std::fs::read_to_string("auth.key");
-        let auth = match contents {
-            Ok(key) => key,
-            Err(_) => "".into(),
-        };
+        let mut headers = header::HeaderMap::new();
+        headers.insert(header::USER_AGENT, HeaderValue::from_static(USER_AGENT));
+
+        let client = Client::builder().default_headers(headers).build().unwrap();
 
         Self {
-            client: Arc::new(Client::new()),
+            client,
             image_cdn_cache: Cache::builder()
                 .time_to_live(std::time::Duration::from_hours(1))
                 .build(),
-            auth_key: auth,
+            api_key: None,
         }
+    }
+
+    pub fn with_api_key(mut self, key: impl Into<String>) -> Self {
+        self.api_key = Some(key.into());
+        self
     }
 
     pub async fn get_doujin(&self, doujin_id: u32) -> Result<Doujin> {
         let url = format!("{}/galleries/{}", API_BASE, doujin_id);
-        let mut req = self.client.get(&url).header("User-Agent", USER_AGENT);
-        if !self.auth_key.is_empty() {
-            req = req.header("Authorization", &self.auth_key);
-        };
+        let mut req = self.client.get(&url);
+
+        if let Some(api_key) = &self.api_key {
+            req = req.header("Authorization", api_key);
+        }
+
         let result = req
             .send()
             .await
@@ -54,7 +64,6 @@ impl SukebeClient {
         let cdn_config = self
             .client
             .get(format!("{}/cdn", API_BASE))
-            .header("User-Agent", USER_AGENT)
             .send()
             .await
             .with_context(|| "Could not fetch cdn config")?
@@ -87,17 +96,16 @@ impl SukebeClient {
             let resp = self
                 .client
                 .get(&url)
-                .header("User-Agent", USER_AGENT)
                 .send()
                 .await
                 .with_context(|| format!("Unable to download page from url: {}", &url))?;
 
-            let path = std::path::Path::new(&page.path);
+            let path = Path::new(&page.path);
 
             let stem = path.file_stem().unwrap().to_str().unwrap(); // "1"
             let ext = path.extension().unwrap().to_str().unwrap(); // "jpg"
 
-            let num: u32 = stem.parse().unwrap();
+            let num: u32 = stem.parse()?;
             let padded = format!("{:03}", num);
 
             let resolved_filename = format!("{}.{}", padded, ext);
