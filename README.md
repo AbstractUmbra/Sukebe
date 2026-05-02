@@ -29,9 +29,18 @@ cargo build
 ```
 
 #### How to use it...
+##### Direct with digits
 ```shell
 ./sukebei -d 177013  # will download this doujin
 ./sukebei --digits 177013  # will download this doujin
 
 ./sukebei --digits 177013 320992 # will download both
 ```
+##### Download from tags
+This is currently a very simple implementation that only features "inclusion" and sorts by popular.
+```sh
+./sukebei --tags nakadashi # downloads up to 25 results from this tag search
+./sukebei --tags 'big breasts' nakadashi paizuri # downloads up to 25 results that have all 3 tags
+```
+##### Download from 'alike'
+WIP.

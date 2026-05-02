@@ -1,5 +1,5 @@
 use futures::stream::TryStreamExt;
-use std::{fs::File, io::Write, path::Path, sync::Arc};
+use std::{fmt::Write as FmtWrite, fs::File, io::Write as IoWrite, path::Path, sync::Arc};
 
 use anyhow::{Context, Result};
 use moka::future::Cache;
@@ -9,15 +9,21 @@ use reqwest::{
     header::{self, HeaderValue},
 };
 
-use crate::models::{CDNResponse, Doujin};
+use crate::models::{CDNResponse, Doujin, DoujinInSearch, DoujinSearch};
 
-pub(crate) const API_BASE: &'static str = "https://nhentai.net/api/v2";
-pub(crate) const USER_AGENT: &'static str = "Sukebe/v1 (https://github.com/AbstractUmbra/Sukebe)";
+pub(crate) const API_BASE: &str = "https://nhentai.net/api/v2";
+pub(crate) const USER_AGENT: &str = "Sukebe/v1 (https://github.com/AbstractUmbra/Sukebe)";
 
 pub struct SukebeClient {
     client: Client,
     image_cdn_cache: Cache<u8, Arc<CDNResponse>>,
     api_key: Option<String>,
+}
+
+impl Default for SukebeClient {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SukebeClient {
@@ -75,6 +81,37 @@ impl SukebeClient {
         self.image_cdn_cache.insert(0, arced.clone()).await;
 
         Ok(arced)
+    }
+
+    pub async fn search_tags(&self, tags: Vec<String>) -> Result<Vec<DoujinInSearch>> {
+        let mut tag_query = String::new();
+
+        let mut first = true;
+        for tag in tags {
+            if !first {
+                tag_query.push(' ');
+            }
+            first = false;
+            write!(&mut tag_query, "tag:{tag}").expect("Unable to build tag query string");
+        }
+
+        let url = format!("{}/search", API_BASE);
+
+        let mut req = self.client.get(&url).query(&[("query", &tag_query)]);
+
+        if let Some(api_key) = &self.api_key {
+            req = req.header("Authorization", api_key);
+        }
+
+        let result = req
+            .send()
+            .await
+            .with_context(|| format!("Could not fetch URL `{}`", &url))?
+            .json::<DoujinSearch>()
+            .await
+            .context("Invalid API response")?;
+
+        Ok(result.result)
     }
 
     pub async fn get_page(&self, doujin: &Doujin) -> Result<()> {

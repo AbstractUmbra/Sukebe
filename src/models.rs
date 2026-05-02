@@ -86,3 +86,26 @@ impl Doujin {
         format_dt!("%d-%m-%Y %H:%M:%S", self.upload_date).to_string()
     }
 }
+
+/// The full API response per Gallery.
+#[derive(Deserialize, Debug)]
+pub struct DoujinInSearch {
+    pub id: u32,
+    pub media_id: String,
+    pub english_title: Option<String>,
+    pub japanese_title: Option<String>,
+    pub thumbnail: String,
+    pub thumbnail_width: u32,
+    pub thumbnail_height: u32,
+    pub num_pages: u32,
+    pub tag_ids: Vec<u32>,
+    pub blacklisted: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct DoujinSearch {
+    pub result: Vec<DoujinInSearch>,
+    pub num_pages: u32,
+    pub per_page: u32,
+    pub total: u32,
+}
