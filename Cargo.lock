@@ -305,7 +305,7 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 [[package]]
 name = "eos"
 version = "0.1.0"
-source = "git+https://github.com/Rapptz/eos.git#c0b7cca9a1b9167dacf1d55f7d47bd2659761589"
+source = "git+https://github.com/Rapptz/eos.git#08c19ebcf74abb0dfaf12c1da26eb04b8d3335ad"
 dependencies = [
  "eos-format-spec-macro",
  "serde",
@@ -314,7 +314,7 @@ dependencies = [
 [[package]]
 name = "eos-format-spec-macro"
 version = "0.1.0"
-source = "git+https://github.com/Rapptz/eos.git#c0b7cca9a1b9167dacf1d55f7d47bd2659761589"
+source = "git+https://github.com/Rapptz/eos.git#08c19ebcf74abb0dfaf12c1da26eb04b8d3335ad"
 
 [[package]]
 name = "equivalent"
