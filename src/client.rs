@@ -9,8 +9,8 @@ use reqwest::{
     header::{self, HeaderValue},
 };
 
+use crate::cli::SearchSort;
 use crate::models::{CDNResponse, Doujin, DoujinInSearch, DoujinSearch};
-
 pub(crate) const API_BASE: &str = "https://nhentai.net/api/v2";
 pub(crate) const USER_AGENT: &str = "Sukebe/v1 (https://github.com/AbstractUmbra/Sukebe)";
 
@@ -83,7 +83,11 @@ impl SukebeClient {
         Ok(arced)
     }
 
-    pub async fn search_tags(&self, tags: Vec<String>) -> Result<Vec<DoujinInSearch>> {
+    pub async fn search_tags(
+        &self,
+        tags: Vec<String>,
+        sort: SearchSort,
+    ) -> Result<Vec<DoujinInSearch>> {
         let mut tag_query = String::new();
 
         let mut first = true;
@@ -97,7 +101,19 @@ impl SukebeClient {
 
         let url = format!("{}/search", API_BASE);
 
-        let mut req = self.client.get(&url).query(&[("query", &tag_query)]);
+        let sort = match sort {
+            SearchSort::Date => "date",
+            SearchSort::PopularAllTime => "popular",
+            SearchSort::PopularMonth => "popular-month",
+            SearchSort::PopularWeek => "popular-week",
+            SearchSort::PopularToday => "popular-today",
+        }
+        .to_owned();
+
+        let mut req = self
+            .client
+            .get(&url)
+            .query(&[("query", &tag_query), ("sort", &sort)]);
 
         if let Some(api_key) = &self.api_key {
             req = req.header("Authorization", api_key);
@@ -147,7 +163,7 @@ impl SukebeClient {
 
             let resolved_filename = format!("{}.{}", padded, ext);
 
-            let file_path = format!("{}/{}", doujin.id, resolved_filename);
+            let file_path = format!("{}/{}", doujin.download_path().display(), resolved_filename);
             let mut file = File::create(&file_path)
                 .with_context(|| format!("Could not create file at `{}`", &file_path))?;
 

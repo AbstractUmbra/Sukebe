@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use eos::{DateTime, Utc, format_dt, serde::timestamp};
 use serde::Deserialize;
 
@@ -84,6 +86,9 @@ pub struct Doujin {
 impl Doujin {
     pub fn pretty_date(&self) -> String {
         format_dt!("%d-%m-%Y %H:%M:%S", self.upload_date).to_string()
+    }
+    pub fn download_path(&self) -> PathBuf {
+        PathBuf::from(format!("download/{}", self.id))
     }
 }
 
