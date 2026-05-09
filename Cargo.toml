@@ -14,7 +14,7 @@ reqwest = { version = "0.13.3", features = [
     "stream",
     "rustls",
 ] }
-tokio = { version = "1.52.1", features = ["full"] }
+tokio = { version = "1.52.3", features = ["full"] }
 serde = { version = "1.0.228", features = ["derive"] }
 eos = { git = "https://github.com/Rapptz/eos.git", features = ["serde"] }
 futures = "0.3.32"
