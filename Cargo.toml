@@ -1,8 +1,9 @@
 [package]
 name = "sukebe"
-version = "1.0.3"
-authors = ["Alex Nørgaard <Umbra@AbstractUmbra.xyz>"]
+version = "1.0.4"
+authors = ["Alex Nørgaard <Umbra@AbstractUmbra.dev>"]
 edition = "2024"
+repository = "https://github.com/AbstractUmbra/sukebe"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -22,3 +23,8 @@ anyhow = "1.0.102"
 serde_json = "1.0.150"
 moka = { version = "0.12", features = ["future"] }
 rand = "0.10.1"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
